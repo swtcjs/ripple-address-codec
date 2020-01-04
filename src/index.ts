@@ -7,7 +7,7 @@ import {
   encodeNodePublic,
   decodeNodePublic,
   isValidClassicAddress
-} from './xrp-codec'
+} from './swtc-codec'
 import * as assert from 'assert'
 
 const PREFIX_BYTES = {

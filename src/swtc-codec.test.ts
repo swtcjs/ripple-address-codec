@@ -1,4 +1,4 @@
-import * as api from './xrp-codec'
+import * as api from './swtc-codec'
 
 function toHex(bytes: Buffer) {
   return Buffer.from(bytes).toString('hex').toUpperCase()
