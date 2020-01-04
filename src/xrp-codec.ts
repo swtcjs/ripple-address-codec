@@ -131,7 +131,7 @@ const codecOptions = {
   sha256: function(bytes: Uint8Array) {
     return createHash('sha256').update(Buffer.from(bytes)).digest()
   },
-  alphabet: 'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz'
+  alphabet: 'jpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65rkm8oFqi1tuvAxyz'
 }
 
 const codecWithXrpAlphabet = new Codec(codecOptions)
