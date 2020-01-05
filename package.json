@@ -11,7 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "base-x": "3.0.4",
-    "create-hash": "^1.1.2"
+    "create-hash": "^1.1.2",
+    "swtc-chains": "^1.0.14"
   },
   "repository": {
     "type": "git",

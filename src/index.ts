@@ -1,132 +1,240 @@
-import {
-  codec,
-  encodeSeed,
-  decodeSeed,
-  encodeAccountID,
-  decodeAccountID,
-  encodeNodePublic,
-  decodeNodePublic,
-  isValidClassicAddress
-} from './swtc-codec'
-import * as assert from 'assert'
+/**
+ * Codec class
+ */
 
-const PREFIX_BYTES = {
-  MAIN: Buffer.from([0x05, 0x44]), // 5, 68
-  TEST: Buffer.from([0x04, 0x93]) // 4, 147
+import * as baseCodec from 'base-x'
+import {seqEqual, concatArgs} from './utils'
+
+class Codec {
+  sha256: (bytes: Uint8Array) => Buffer
+  alphabet: string
+  codec: any
+  base: number
+
+  constructor(options: {
+    sha256: (bytes: Uint8Array) => Buffer,
+    alphabet: string
+  }) {
+    this.sha256 = options.sha256
+    this.alphabet = options.alphabet
+    this.codec = baseCodec(this.alphabet)
+    this.base = this.alphabet.length
+  }
+
+  /**
+   * Encoder.
+   *
+   * @param bytes Buffer of data to encode.
+   * @param opts Options object including the version bytes and the expected length of the data to encode.
+   */
+  encode(bytes: Buffer, opts: {
+    versions: number[],
+    expectedLength: number
+  }): string {
+    const versions = opts.versions
+    return this.encodeVersioned(bytes, versions, opts.expectedLength)
+  }
+
+  encodeVersioned(bytes: Buffer, versions: number[], expectedLength: number): string {
+    if (expectedLength && bytes.length !== expectedLength) {
+      throw new Error('unexpected_payload_length: bytes.length does not match expectedLength')
+    }
+    return this.encodeChecked(Buffer.from(concatArgs(versions, bytes)))
+  }
+
+  encodeChecked(buffer: Buffer): string {
+    const check = this.sha256(this.sha256(buffer)).slice(0, 4)
+    return this.encodeRaw(Buffer.from(concatArgs(buffer, check)))
+  }
+
+  encodeRaw(bytes: Buffer): string {
+    return this.codec.encode(bytes)
+  }
+
+  /**
+   * Decoder.
+   *
+   * @param base58string Base58Check-encoded string to decode.
+   * @param opts Options object including the version byte(s) and the expected length of the data after decoding.
+   */
+  decode(base58string: string, opts: {
+    versions: (number | number[])[],
+    expectedLength?: number,
+    versionTypes?: ['ed25519', 'secp256k1']
+  }): {
+    version: number[],
+    bytes: Buffer,
+    type: string | null
+  } {
+    const versions = opts.versions
+    const types = opts.versionTypes
+
+    const withoutSum = this.decodeChecked(base58string)
+
+    if (versions.length > 1 && !opts.expectedLength) {
+      throw new Error('expectedLength is required because there are >= 2 possible versions')
+    }
+    const versionLengthGuess = typeof versions[0] === 'number' ? 1 : (versions[0] as number[]).length
+    const payloadLength = opts.expectedLength || withoutSum.length - versionLengthGuess
+    const versionBytes = withoutSum.slice(0, -payloadLength)
+    const payload = withoutSum.slice(-payloadLength)
+
+    for (let i = 0; i < versions.length; i++) {
+      const version: number[] = Array.isArray(versions[i]) ? versions[i] as number[] : [versions[i] as number]
+      if (seqEqual(versionBytes, version)) {
+        return {
+          version,
+          bytes: payload,
+          type: types ? types[i] : null
+        }
+      }
+    }
+
+    throw new Error('version_invalid: version bytes do not match any of the provided version(s)')
+  }
+
+  decodeChecked(base58string: string): Buffer {
+    const buffer = this.decodeRaw(base58string)
+    if (buffer.length < 5) {
+      throw new Error('invalid_input_size: decoded data must have length >= 5')
+    }
+    if (!this.verifyCheckSum(buffer)) {
+      throw new Error('checksum_invalid')
+    }
+    return buffer.slice(0, -4)
+  }
+
+  decodeRaw(base58string: string): Buffer {
+    return this.codec.decode(base58string)
+  }
+
+  verifyCheckSum(bytes: Buffer): boolean {
+    const computed = this.sha256(this.sha256(bytes.slice(0, -4))).slice(0, 4)
+    const checksum = bytes.slice(-4)
+    return seqEqual(computed, checksum)
+  }
 }
 
-function classicAddressToXAddress(classicAddress: string, tag: number | false, test: boolean): string {
-  const accountId = decodeAccountID(classicAddress)
-  return encodeXAddress(accountId, tag, test)
+/**
+ * SWTC codec
+ */
+
+// Pure JavaScript hash functions in the browser, native hash functions in Node.js
+const createHash = require('create-hash')
+const SWTC_CHAINS = require('swtc-chains')
+
+const NODE_PUBLIC = 28
+const NODE_PRIVATE = 32
+const ACCOUNT_ID = 0
+const FAMILY_SEED = 0x21 // 33
+const ED25519_SEED = [0x01, 0xE1, 0x4B] // [1, 225, 75]
+
+const codecOptions = {
+  sha256: function(bytes: Uint8Array) {
+    return createHash('sha256').update(Buffer.from(bytes)).digest()
+  },
+  alphabet: 'jpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65rkm8oFqi1tuvAxyz'
 }
 
-function encodeXAddress(accountId: Buffer, tag: number | false, test: boolean): string {
-  if (accountId.length !== 20) {
-    // RIPEMD160 is 160 bits = 20 bytes
-    throw new Error('Account ID must be 20 bytes')
-  }
-  const MAX_32_BIT_UNSIGNED_INT = 4294967295
-  const flag = tag === false ? 0 : tag <= MAX_32_BIT_UNSIGNED_INT ? 1 : 2
-  if (flag === 2) {
-    throw new Error('Invalid tag')
-  }
-  if (tag === false) {
-    tag = 0
-  }
-  const bytes = Buffer.concat(
-    [
-      test ? PREFIX_BYTES.TEST : PREFIX_BYTES.MAIN,
-      accountId,
-      Buffer.from(
-        [
-          flag, // 0x00 if no tag, 0x01 if 32-bit tag
-          tag & 0xff, // first byte
-          (tag >> 8) & 0xff, // second byte
-          (tag >> 16) & 0xff, // third byte
-          (tag >> 24) & 0xff, // fourth byte
-          0, 0, 0, 0 // four zero bytes (reserved for 64-bit tags)
-        ]
-      )
-    ]
+export function getAddressCodec(chain_or_token = "jingtum") {
+  let chain, alphabet, filtered_chains = []
+  filtered_chains = SWTC_CHAINS.filter(
+    chain =>
+      chain.code.toLowerCase() === chain_or_token.toLowerCase() ||
+      chain.currency.toUpperCase() === chain_or_token.toUpperCase()
   )
-  const xAddress = codec.encodeChecked(bytes)
-  return xAddress
-}
-
-function xAddressToClassicAddress(xAddress: string): {classicAddress: string, tag: number | false, test: boolean} {
-  const {
-    accountId,
-    tag,
-    test
-  } = decodeXAddress(xAddress)
-  const classicAddress = encodeAccountID(accountId)
-  return {
-    classicAddress,
-    tag,
-    test
-  }
-}
-
-function decodeXAddress(xAddress: string): {accountId: Buffer, tag: number | false, test: boolean} {
-  const decoded = codec.decodeChecked(xAddress)
-  const test = isBufferForTestAddress(decoded)
-  const accountId = decoded.slice(2, 22)
-  const tag = tagFromBuffer(decoded)
-  return {
-    accountId,
-    tag,
-    test
-  }
-}
-
-function isBufferForTestAddress(buf: Buffer): boolean {
-  const decodedPrefix = buf.slice(0, 2)
-  if (PREFIX_BYTES.MAIN.equals(decodedPrefix)) {
-    return false
-  } else if (PREFIX_BYTES.TEST.equals(decodedPrefix)) {
-    return true
+  if (filtered_chains.length !== 1) {
+    // if it is not provided in SWTC_CHAINS
+    throw new Error("the chain you specified is not available yet")
   } else {
-    throw new Error('Invalid X-address: bad prefix')
+    chain = filtered_chains[0]
+    alphabet = chain.ACCOUNT_ALPHABET
+    codecOptions.alphabet = alphabet
   }
-}
+  const codecWithAlphabet = new Codec(codecOptions)
 
-function tagFromBuffer(buf: Buffer): number | false {
-  const flag = buf[22]
-  if (flag >= 2) {
-    // No support for 64-bit tags at this time
-    throw new Error('Unsupported X-address')
+  // entropy is a Buffer of size 16
+  // type is 'ed25519' or 'secp256k1'
+  function encodeSeed(entropy: Buffer, type: 'ed25519' | 'secp256k1'): string {
+    if (entropy.length !== 16) {
+      throw new Error('entropy must have length 16')
+    }
+    const opts = {
+      expectedLength: 16,
+  
+      // for secp256k1, use `FAMILY_SEED`
+      versions: type === 'ed25519' ? ED25519_SEED : [FAMILY_SEED]
+    }
+  
+    // prefixes entropy with version bytes
+    return codecWithAlphabet.encode(entropy, opts)
   }
-  if (flag === 1) {
-    // Little-endian to big-endian
-    return buf[23] + buf[24] * 0x100 + buf[25] * 0x10000 + buf[26] * 0x1000000
+  
+  function decodeSeed(seed: string, opts: {
+    versionTypes: ['ed25519', 'secp256k1'],
+    versions: (number | number[])[]
+    expectedLength: number
+  } = {
+    versionTypes: ['ed25519', 'secp256k1'],
+    versions: [ED25519_SEED, FAMILY_SEED],
+    expectedLength: 16
+  }) {
+    return codecWithAlphabet.decode(seed, opts)
   }
-  assert.strictEqual(flag, 0, 'flag must be zero to indicate no tag')
-  assert.ok(Buffer.from('0000000000000000', 'hex').equals(buf.slice(23, 23 + 8)),
-    'remaining bytes must be zero')
-  return false
-}
+  
+  function encodeAccountID(bytes: Buffer): string {
+    const opts = {versions: [ACCOUNT_ID], expectedLength: 20}
+    return codecWithAlphabet.encode(bytes, opts)
+  }
+  
+  
+  function decodeAccountID(accountId: string): Buffer {
+    const opts = {versions: [ACCOUNT_ID], expectedLength: 20}
+    return codecWithAlphabet.decode(accountId, opts).bytes
+  }
+  
+  
+  function decodeNodePublic(base58string: string): Buffer {
+    const opts = {versions: [NODE_PUBLIC], expectedLength: 33}
+    return codecWithAlphabet.decode(base58string, opts).bytes
+  }
+  
+  function encodeNodePublic(bytes: Buffer): string {
+    const opts = {versions: [NODE_PUBLIC], expectedLength: 33}
+    return codecWithAlphabet.encode(bytes, opts)
+  }
+  
+  function decodeNodePrivate(base58string: string): Buffer {
+    const opts = {versions: [NODE_PRIVATE], expectedLength: 32}
+    return codecWithAlphabet.decode(base58string, opts).bytes
+  }
+  
+  function encodeNodePrivate(bytes: Buffer): string {
+    const opts = {versions: [NODE_PRIVATE], expectedLength: 32}
+    return codecWithAlphabet.encode(bytes, opts)
+  }
+  function isValidClassicAddress(address: string): boolean {
+    try {
+      decodeAccountID(address)
+    } catch (e) {
+      return false
+    }
+    return true
+  }
 
-function isValidXAddress(xAddress: string): boolean {
-  try {
-    decodeXAddress(xAddress)
-  } catch (e) {
-    return false
+  return {
+    codec: codecWithAlphabet,
+    encodeSeed,
+    decodeSeed,
+    encodeAccountID,
+    decodeAccountID,
+    encodeNodePublic,
+    decodeNodePublic,
+    encodeNodePrivate,
+    decodeNodePrivate,
+    isValidClassicAddress,
+    isValidAddress: isValidClassicAddress,
+    encodeAddress: encodeAccountID,
+    decodeAddress: decodeAccountID
   }
-  return true
-}
-
-export {
-  codec, // Codec with XRP alphabet
-  encodeSeed, // Encode entropy as a "seed"
-  decodeSeed, // Decode a seed into an object with its version, type, and bytes
-  encodeAccountID, // Encode bytes as a classic address (r...)
-  decodeAccountID, // Decode a classic address to its raw bytes
-  encodeNodePublic, // Encode bytes to XRP Ledger node public key format
-  decodeNodePublic, // Decode an XRP Ledger node public key into its raw bytes
-  isValidClassicAddress, // Check whether a classic address (r...) is valid
-  classicAddressToXAddress, // Derive X-address from classic address, tag, and network ID
-  encodeXAddress, // Encode account ID, tag, and network ID to X-address
-  xAddressToClassicAddress, // Decode X-address to account ID, tag, and network ID
-  decodeXAddress, // Convert X-address to classic address, tag, and network ID
-  isValidXAddress // Check whether an X-address (X...) is valid
 }

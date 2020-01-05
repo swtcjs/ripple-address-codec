@@ -1,244 +1,255 @@
-// import {
-//   classicAddressToXAddress,
-//   xAddressToClassicAddress,
-//   isValidXAddress,
-//   encodeXAddress
-// } from './index'
-// 
-// const testCases = [
-//   [
-//     'r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59',
-//     false,
-//     'X7AcgcsBL6XDcUb289X4mJ8djcdyKaB5hJDWMArnXr61cqZ',
-//     'T719a5UwUCnEs54UsxG9CJYYDhwmFCqkr7wxCcNcfZ6p5GZ'
-//   ],
-//   [
-//     'r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59',
-//     1,
-//     'X7AcgcsBL6XDcUb289X4mJ8djcdyKaGZMhc9YTE92ehJ2Fu',
-//     'T719a5UwUCnEs54UsxG9CJYYDhwmFCvbJNZbi37gBGkRkbE'
-//   ],
-//   [
-//     'r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59',
-//     14,
-//     'X7AcgcsBL6XDcUb289X4mJ8djcdyKaGo2K5VpXpmCqbV2gS',
-//     'T719a5UwUCnEs54UsxG9CJYYDhwmFCvqXVCALUGJGSbNV3x'
-//   ],
-//   [
-//     'r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59',
-//     11747,
-//     'X7AcgcsBL6XDcUb289X4mJ8djcdyKaLFuhLRuNXPrDeJd9A',
-//     'T719a5UwUCnEs54UsxG9CJYYDhwmFCziiNHtUukubF2Mg6t'
-//   ],
-//   [
-//     'rLczgQHxPhWtjkaQqn3Q6UM8AbRbbRvs5K',
-//     false,
-//     'XVZVpQj8YSVpNyiwXYSqvQoQqgBttTxAZwMcuJd4xteQHyt',
-//     'TVVrSWtmQQssgVcmoMBcFQZKKf56QscyWLKnUyiuZW8ALU4'
-//   ],
-//   [
-//     'rpZc4mVfWUif9CRoHRKKcmhu1nx2xktxBo',
-//     false,
-//     'X7YenJqxv3L66CwhBSfd3N8RzGXxYqPopMGMsCcpho79rex',
-//     'T77wVQzA8ntj9wvCTNiQpNYLT5hmhRsFyXDoMLqYC4BzQtV'
-//   ],
-//   [
-//     'rpZc4mVfWUif9CRoHRKKcmhu1nx2xktxBo',
-//     58,
-//     'X7YenJqxv3L66CwhBSfd3N8RzGXxYqV56ZkTCa9UCzgaao1',
-//     'T77wVQzA8ntj9wvCTNiQpNYLT5hmhR9kej6uxm4jGcQD7rZ'
-//   ],
-//   [
-//     'rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW',
-//     23480,
-//     'X7d3eHCXzwBeWrZec1yT24iZerQjYL8m8zCJ16ACxu1BrBY',
-//     'T7YChPFWifjCAXLEtg5N74c7fSAYsvSokwcmBPBUZWhxH5P'
-//   ],
-//   [
-//     'rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW',
-//     11747,
-//     'X7d3eHCXzwBeWrZec1yT24iZerQjYLo2CJf8oVC5CMWey5m',
-//     'T7YChPFWifjCAXLEtg5N74c7fSAYsvTcc7nEfwuEEvn5Q4w'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     false,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtV5fdx1mHp98tDMoQXb',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQn49b3qD26PK7FcGSKE'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     0,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtV8AqEL4xcZj5whKbmc',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnSy8RHqGHoGJ59spi2'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     1,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtV8xvjGQTYPiAx6gwDC',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnSz1uDimDdPYXzSpyw'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     2,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtV8zpDURx7DzBCkrQE7',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnTryP9tG9TW8GeMBmd'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     32,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtVoYiC9UvKfjKar4LJe',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnT2oqaCDzMEuCDAj1j'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     276,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtVoKj3MnFGMXEFMnvJV',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnTMgJJYfAbsiPsc6Zg'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     65591,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtVozpjdhPQVdt3ghaWw',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQn7ryu2W6njw7mT1jmS'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     16781933,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtVqrDUk2vDpkTjPsY73',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnVsw45sDtGHhLi27Qa'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     4294967294,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnX8tDFQ53itLNqs6vU'
-//   ],
-//   [
-//     'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     4294967295,
-//     'XVLhHMPHU98es4dbozjVtdWzVrDjtV18pX8yuPT7y4xaEHi',
-//     'TVE26TYGhfLC7tQDno7G8dGtxSkYQnXoy6kSDh6rZzApc69'
-//   ],
-//   [
-//     'rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY',
-//     false,
-//     'XV5sbjUmgPpvXv4ixFWZ5ptAYZ6PD2gYsjNFQLKYW33DzBm',
-//     'TVd2rqMkYL2AyS97NdELcpeiprNBjwLZzuUG5rZnaewsahi'
-//   ],
-//   [
-//     'rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY',
-//     0,
-//     'XV5sbjUmgPpvXv4ixFWZ5ptAYZ6PD2m4Er6SnvjVLpMWPjR',
-//     'TVd2rqMkYL2AyS97NdELcpeiprNBjwRQUBetPbyrvXSTuxU'
-//   ],
-//   [
-//     'rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY',
-//     13371337,
-//     'XV5sbjUmgPpvXv4ixFWZ5ptAYZ6PD2qwGkhgc48zzcx6Gkr',
-//     'TVd2rqMkYL2AyS97NdELcpeiprNBjwVUDvp3vhpXbNhLwJi'
-//   ]
-// ]
+import { getAddressCodec } from './index'
+const api = getAddressCodec()
 
-// ;[false, true].forEach(isTestAddress => {
-//   const MAX_32_BIT_UNSIGNED_INT = 4294967295
-//   const network = isTestAddress ? ' (test)' : ' (main)'
-// 
-//   for (const i in testCases) {
-//     const testCase = testCases[i]
-//     const classicAddress = testCase[0] as string
-//     const tag = testCase[1] !== false ? testCase[1] as number : false
-//     const xAddress = isTestAddress ? testCase[3] as string : testCase[2] as string
-//     test(`Converts ${classicAddress}${tag ? ':' + tag : ''} to ${xAddress}${network}`, () => {
-//       expect(classicAddressToXAddress(classicAddress, tag, isTestAddress)).toBe(xAddress)
-//       const myClassicAddress = xAddressToClassicAddress(xAddress)
-//       expect(myClassicAddress).toEqual({
-//         classicAddress,
-//         tag,
-//         test: isTestAddress
-//       })
-//       expect(isValidXAddress(xAddress)).toBe(true)
-//     })
-//   }
-// 
-//   {
-//     const classicAddress = 'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf'
-//     const tag = MAX_32_BIT_UNSIGNED_INT + 1
-// 
-//     test(`Converting ${classicAddress}:${tag}${network} throws`, () => {
-//       expect(() => {
-//         classicAddressToXAddress(classicAddress, tag, isTestAddress)
-//       }).toThrowError(new Error('Invalid tag'))
-//     })
-//   }
-// 
-//   {
-//     const classicAddress = 'r'
-//     test(`Invalid classic address: Converting ${classicAddress}${network} throws`, () => {
-//       expect(() => {
-//         classicAddressToXAddress(classicAddress, false, isTestAddress)
-//       }).toThrowError(new Error('invalid_input_size: decoded data must have length >= 5'))
-//     })
-//   }
-// 
-//   {
-//     const highAndLowAccounts = [
-//       Buffer.from('00'.repeat(20), 'hex'),
-//       Buffer.from('00'.repeat(19) + '01', 'hex'),
-//       Buffer.from('01'.repeat(20), 'hex'),
-//       Buffer.from('FF'.repeat(20), 'hex')
-//     ]
-// 
-//     highAndLowAccounts.forEach(accountId => {
-//       [false, 0, 1, MAX_32_BIT_UNSIGNED_INT].forEach(t => {
-//         const tag = (t as number | false)
-//         const xAddress = encodeXAddress(accountId, tag, isTestAddress)
-//         test(`Encoding ${accountId.toString('hex')}${tag ? ':' + tag : ''} to ${xAddress} has expected length`, () => {
-//           expect(xAddress.length).toBe(47)
-//         })
-//       })
-//     })
-//   }
-// })
-// 
-// {
-//   const xAddress = 'XVLhHMPHU98es4dbozjVtdWzVrDjtV5fdx1mHp98tDMoQXa'
-//   test(`Invalid X-address (bad checksum): Converting ${xAddress} throws`, () => {
-//     expect(() => {
-//       xAddressToClassicAddress(xAddress)
-//     }).toThrowError(new Error('checksum_invalid'))
+function toHex(bytes: Buffer) {
+  return Buffer.from(bytes).toString('hex').toUpperCase()
+}
+
+function toBytes(hex: string) {
+  return Buffer.from(hex, 'hex').toJSON().data
+}
+
+console.log(toBytes("47F64F980B9235CCC3BF8647C17078DE"))
+
+/**
+ * Create a test case for encoding data and a test case for decoding data.
+ *
+ * @param encoder Encoder function to test
+ * @param decoder Decoder function to test
+ * @param base58 Base58-encoded string to decode
+ * @param hex Hexadecimal representation of expected decoded data
+ */
+// function makeEncodeDecodeTest(encoder: Function, decoder: Function, base58: string, hex: string) {
+//   test(`can translate between ${hex} and ${base58}`, function() {
+//     const actual = encoder(toBytes(hex))
+//     expect(actual).toBe(base58)
+//   })
+//   test(`can translate between ${base58} and ${hex})`, function() {
+//     const buf = decoder(base58)
+//     expect(toHex(buf)).toBe(hex)
 //   })
 // }
+
+// makeEncodeDecodeTest(api.encodeAccountID, api.decodeAccountID, 'j9yYjF8Gni7MwYHKSBZF8quzqExipe6eXM',
+//  'ED94983FC8BFECED4284FF9745F637FF4FFD4DBAD9F7095237FED237AE4F956B57')
+
+// makeEncodeDecodeTest(api.encodeNodePublic, api.decodeNodePublic,
+//   'n9MXXueo837zYH36DvMc13BwHcqtfAWNJY5czWVbp7uYTj7x17TH',
+//   '0388E5BA87A000CB807240DF8C848EB0B5FFA5C8E5A521BC8E105C0F0A44217828')
 // 
-// {
-//   const xAddress = 'dGzKGt8CVpWoa8aWL1k18tAdy9Won3PxynvbbpkAqp3V47g'
-//   test(`Invalid X-address (bad prefix): Converting ${xAddress} throws`, () => {
-//     expect(() => {
-//       xAddressToClassicAddress(xAddress)
-//     }).toThrowError(new Error('Invalid X-address: bad prefix'))
+test('can decode arbitrary seeds', function() {
+  const decoded = api.decodeSeed('sEdTJSpen5J8ZA7H4cVGDF6oSSLLW2Y')
+  expect(toHex(decoded.bytes)).toBe('47F64F980B9235CCC3BF8647C17078DE')
+  expect(decoded.type).toBe('ed25519')
+
+  const decoded2 = api.decodeSeed('ssiUDhUpUZ5JDPWZ9Twt27Ckq6k4C')
+  expect(toHex(decoded2.bytes)).toBe('52C8B35EBF3A539FDBA6481F08B5120C')
+  expect(decoded2.type).toBe('secp256k1')
+})
+
+test('can pass a type as second arg to encodeSeed', function() {
+  const edSeed = 'sEdTJSpen5J8ZA7H4cVGDF6oSSLLW2Y'
+  const decoded = api.decodeSeed(edSeed)
+  const type = 'ed25519'
+  expect(toHex(decoded.bytes)).toBe('47F64F980B9235CCC3BF8647C17078DE')
+  expect(decoded.type).toBe(type)
+  expect(api.encodeSeed(decoded.bytes, type)).toBe(edSeed)
+})
+
+test('can pass a type as second arg to encodeSeed', function() {
+  const seed = 'ssiUDhUpUZ5JDPWZ9Twt27Ckq6k4C'
+  const decoded = api.decodeSeed(seed)
+  const type = 'secp256k1'
+  expect(toHex(decoded.bytes)).toBe('52C8B35EBF3A539FDBA6481F08B5120C')
+  expect(decoded.type).toBe(type)
+  expect(api.encodeSeed(decoded.bytes, type)).toBe(seed)
+})
+
+test('isValidClassicAddress - secp256k1 address valid', function() {
+  expect(api.isValidClassicAddress('jpmKEm2sUevfpFjS7QHdT8Sx7ZGoEXTJAz')).toBe(true)
+})
+
+test('isValidClassicAddress - ed25519 address valid', function() {
+  expect(api.isValidClassicAddress('jfqiMxoT228vp3dMrXKnJXo6V9iYEx94pt')).toBe(true)
+})
+
+test('isValidClassicAddress - invalid', function() {
+  expect(api.isValidClassicAddress('jfqiMxoT228vp3dMrXKnJXo6V9iYEx94pz')).toBe(false)
+  expect(api.isValidClassicAddress('jpmKEm2sUevfpFjS7QHdT8Sx7ZGoEXTJAa')).toBe(false)
+})
+
+test('isValidClassicAddress - empty', function() {
+  expect(api.isValidClassicAddress('')).toBe(false)
+})
+
+// describe('encodeSeed', function() {
+// 
+//   it('encodes a secp256k1 seed', function() {
+//     const result = api.encodeSeed(Buffer.from('CF2DE378FBDD7E2EE87D486DFB5A7BFF', 'hex'), 'secp256k1')
+//     expect(result).toBe('sn259rEFXrQrWyx3Q7XneWcwV6dfL')
 //   })
-// }
 // 
-// test(`Invalid X-address (64-bit tag) throws`, () => {
-//   expect(() => {
-//     // Encoded from:
-//     // {
-//     //   classicAddress: 'rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf',
-//     //   tag: MAX_32_BIT_UNSIGNED_INT + 1
-//     // }
-//     xAddressToClassicAddress('XVLhHMPHU98es4dbozjVtdWzVrDjtV18pX8zeUygYrCgrPh')
-//   }).toThrowError('Unsupported X-address')
+//   it('encodes low secp256k1 seed', function() {
+//     const result = api.encodeSeed(Buffer.from('00000000000000000000000000000000', 'hex'), 'secp256k1')
+//     expect(result).toBe('sp6JS7f14BuwFY8Mw6bTtLKWauoUs')
+//   })
+// 
+//   it('encodes high secp256k1 seed', function() {
+//     const result = api.encodeSeed(Buffer.from('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 'hex'), 'secp256k1')
+//     expect(result).toBe('saGwBRReqUNKuWNLpUAq8i8NkXEPN')
+//   })
+// 
+//   it('encodes an ed25519 seed', function() {
+//     const result = api.encodeSeed(Buffer.from('4C3A1D213FBDFB14C7C28D609469B341', 'hex'), 'ed25519')
+//     expect(result).toBe('sEdTM1uX8pu2do5XvTnutH6HsouMaM2')
+//   })
+// 
+//   it('encodes low ed25519 seed', function() {
+//     const result = api.encodeSeed(Buffer.from('00000000000000000000000000000000', 'hex'), 'ed25519')
+//     expect(result).toBe('sEdSJHS4oiAdz7w2X2ni1gFiqtbJHqE')
+//   })
+// 
+//   it('encodes high ed25519 seed', function() {
+//     const result = api.encodeSeed(Buffer.from('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 'hex'), 'ed25519')
+//     expect(result).toBe('sEdV19BLfeQeKdEXyYA4NhjPJe6XBfG')
+//   })
+// 
+//   test('attempting to encode a seed with less than 16 bytes of entropy throws', function() {
+//     expect(() => {
+//       api.encodeSeed(Buffer.from('CF2DE378FBDD7E2EE87D486DFB5A7B', 'hex'), 'secp256k1')
+//     }).toThrow('entropy must have length 16')
+//   })
+// 
+//   test('attempting to encode a seed with more than 16 bytes of entropy throws', function() {
+//     expect(() => {
+//       api.encodeSeed(Buffer.from('CF2DE378FBDD7E2EE87D486DFB5A7BFFFF', 'hex'), 'secp256k1')
+//     }).toThrow('entropy must have length 16')
+//   })
 // })
 // 
-// test(`Invalid Account ID throws`, () => {
-//   expect(() => {
-//     encodeXAddress(Buffer.from('00'.repeat(19), 'hex'), false, false)
-//   }).toThrowError('Account ID must be 20 bytes')
+// describe('decodeSeed', function() {
+// 
+//   it('can decode an Ed25519 seed', function() {
+//     const decoded = api.decodeSeed('sEdTM1uX8pu2do5XvTnutH6HsouMaM2')
+//     expect(toHex(decoded.bytes)).toBe('4C3A1D213FBDFB14C7C28D609469B341')
+//     expect(decoded.type).toBe('ed25519')
+//   })
+// 
+//   it('can decode a secp256k1 seed', function() {
+//     const decoded = api.decodeSeed('sn259rEFXrQrWyx3Q7XneWcwV6dfL')
+//     expect(toHex(decoded.bytes)).toBe('CF2DE378FBDD7E2EE87D486DFB5A7BFF')
+//     expect(decoded.type).toBe('secp256k1')
+//   })
 // })
 // 
-// test(`isValidXAddress returns false for invalid X-address`, () => {
-//   expect(isValidXAddress('XVLhHMPHU98es4dbozjVtdWzVrDjtV18pX8zeUygYrCgrPh')).toBe(false)
+describe('encodeAccountID', function() {
+
+  it('can encode an AccountID', function() {
+    const encoded = api.encodeAccountID(Buffer.from('BA8E78626EE42C41B46D46C3048DF3A1C3C87072', 'hex'))
+    expect(encoded).toBe('jJjRMgiRgjU6hDF4pgu5DXQdWyPbY35EjN')
+  })
+
+  test('unexpected length should throw', function() {
+    expect(() => {
+      api.encodeAccountID(Buffer.from('ABCDEF', 'hex'))
+    }).toThrow(
+      'unexpected_payload_length: bytes.length does not match expectedLength'
+    )
+  })
+})
+// 
+// describe('decodeNodePublic', function() {
+// 
+//   it('can decode a NodePublic', function() {
+//     const decoded = api.decodeNodePublic('n9MXXueo837zYH36DvMc13BwHcqtfAWNJY5czWVbp7uYTj7x17TH')
+//     expect(toHex(decoded)).toBe('0388E5BA87A000CB807240DF8C848EB0B5FFA5C8E5A521BC8E105C0F0A44217828')
+//   })
 // })
-test(`fake test`, () => {
-  expect(100).toBe(100)
+// 
+test('encodes 123456789 with version byte of 0', () => {
+  expect(api.codec.encode(Buffer.from('123456789'), {
+    versions: [0],
+    expectedLength: 9
+  })).toBe('jnaC7gW34M77Kneb78s')
+})
+
+test('multiple versions with no expected length should throw', () => {
+  expect(() => {
+    api.codec.decode('jnaC7gW34M77Kneb78s', {
+      versions: [0, 1]
+    })
+  }).toThrow('expectedLength is required because there are >= 2 possible versions')
+})
+ 
+test('attempting to decode data with length < 5 should throw', () => {
+  expect(() => {
+    api.codec.decode('1234', {
+      versions: [0]
+    })
+  }).toThrow('invalid_input_size: decoded data must have length >= 5')
+})
+
+test('attempting to decode data with unexpected version should throw', () => {
+  expect(() => {
+    api.codec.decode('jnaC7gW34M77Kneb78s', {
+      versions: [2]
+    })
+  }).toThrow('version_invalid: version bytes do not match any of the provided version(s)')
+})
+
+test('invalid checksum should throw', () => {
+  expect(() => {
+    api.codec.decode('123456789', {
+      versions: [0, 1]
+    })
+  }).toThrow('checksum_invalid')
+})
+
+test('empty payload should throw', () => {
+  expect(() => {
+    api.codec.decode('', {
+      versions: [0, 1]
+    })
+  }).toThrow('invalid_input_size: decoded data must have length >= 5')
+})
+
+test('decode data', () => {
+  expect(api.codec.decode('jnaC7gW34M77Kneb78s', {
+    versions: [0]
+  })).toStrictEqual({
+    version: [0],
+    bytes: Buffer.from('123456789'),
+    type: null
+  })
+})
+
+test('decode data with expected length', function() {
+  expect(api.codec.decode('jnaC7gW34M77Kneb78s', {
+      versions: [0],
+      expectedLength: 9
+    })
+    ).toStrictEqual({
+      version: [0],
+      bytes: Buffer.from('123456789'),
+      type: null
+    })
+})
+
+test('decode data with wrong expected length should throw', function() {
+  expect(() => {
+    api.codec.decode('jnaC7gW34M77Kneb78s', {
+      versions: [0],
+      expectedLength: 8
+    })
+  }).toThrow(
+    'version_invalid: version bytes do not match any of the provided version(s)'
+  )
+  expect(() => {
+    api.codec.decode('jnaC7gW34M77Kneb78s', {
+      versions: [0],
+      expectedLength: 10
+    })
+  }).toThrow(
+    'version_invalid: version bytes do not match any of the provided version(s)'
+  )
 })
